@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match Game</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            width: 80%;
+            max-width: 500px;
+            margin: auto;
+            position: relative;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background-image: url('https://img.freepik.com/free-vector/horned-king-skull-clothing-design_43623-1638.jpg'); /* Card back image */
+            background-size: cover;
+            background-position: center;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.6s, box-shadow 0.3s;
+            transform-style: preserve-3d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            position: relative;
+            color: transparent; /* Hide text until flipped */
+            box-shadow: 3px 3px 10px grey; /* Grey shadow */
+        }
+        .card:hover {
+            box-shadow: 5px 5px 15px grey;
+        }
+        .flipped {
+            transform: rotateY(180deg);
+            background-color: white !important;
+            background-image: none !important;
+            color: black !important; /* Show the emoji */
+        }
+        .matched {
+            background-color: green !important;
+            color: white !important;
+            position: relative;
+        }
+        .matched::after {
+            content: '\2713'; /* Tick mark */
+            color: white;
+            font-size: 30px;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+        }
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            display: none;
+            text-align: center;
+            width: 300px;
+            border-radius: 10px;
+        }
+        #win-message {
+            background-color: black;
+            color: lime;
+            font-size: 50px;
+            font-weight: bold;
+            text-shadow: 3px 3px 10px green;
+        }
+        #lose-message {
+            background-color: black;
+            color: red;
+            font-size: 50px;
+            font-weight: bold;
+            text-shadow: 3px 3px 10px black;
+        }
+        button {
+            font-size: 20px;
+            padding: 15px 30px;
+            margin: 10px;
+            background-color: skyblue;
+            color: black;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s;
+        }
+        button:hover {
+            background-color: lightblue;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Memory Match Game</h1>
+    <p>Select a Category:</p>
+    <button onclick="selectCategory('fruits')">Fruits</button>
+    <button onclick="selectCategory('animals')">Animals</button>
+    <button onclick="selectCategory('cartoons')">Cartoons</button>
+    
+    <div id="timeOptions" style="display: none;">
+        <p>Select Time:</p>
+        <button onclick="startGame(30)">30 sec</button>
+        <button onclick="startGame(60)">60 sec</button>
+        <button onclick="startGame(80)">80 sec</button>
+        <button onclick="startGame(120)">120 sec</button>
+    </div>
+    
+    <p>All THE BEST NANI <span id="timer"></span></p>
+    <div class="game-container" id="gameBoard"></div>
+    
+    <div id="message-box">
+        <p id="win-message">You Win!</p>
+        <p id="lose-message">Oops! You Lose!</p>
+    </div>
+    
+    <script>
+        let selectedCategory;
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let timeLeft;
+        let timer;
+        
+        const categories = {
+            fruits: ['🍎', '🍌', '🍇', '🍉', '🍓', '🍍', '🥝', '🍒'],
+            animals: ['🐶', '🐱', '🐻', '🐯', '🦁', '🐸', '🐷', '🐭'],
+            cartoons: ['🦸', '🦹', '🤡', '👽', '🧙', '🦄', '👾', '🤖']
+        };
+        
+        function selectCategory(category) {
+            selectedCategory = category;
+            document.getElementById('timeOptions').style.display = 'block';
+        }
+        
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+        
+        function startGame(selectedTime) {
+            cards = [...categories[selectedCategory], ...categories[selectedCategory]];
+            cards = shuffle(cards);
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+            document.getElementById('message-box').style.display = 'none';
+            matchedPairs = 0;
+            timeLeft = selectedTime;
+            clearInterval(timer);
+            document.getElementById('timer').textContent = timeLeft;
+            
+            cards.forEach((symbol, index) => {
+                let card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.symbol = symbol;
+                card.dataset.index = index;
+                card.addEventListener('click', flipCard);
+                gameBoard.appendChild(card);
+            });
+            startTimer();
+        }
+        
+        function flipCard() {
+            if (flippedCards.length < 2 && !this.classList.contains('matched')) {
+                this.textContent = this.dataset.symbol; // Show emoji
+                this.classList.add('flipped');
+                flippedCards.push(this);
+                if (flippedCards.length === 2) {
+                    setTimeout(checkMatch, 1000);
+                }
+            }
+        }
+        
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            if (card1.dataset.symbol === card2.dataset.symbol) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                if (matchedPairs === cards.length / 2) {
+                    document.getElementById('win-message').style.display = 'block';
+                    document.getElementById('lose-message').style.display = 'none';
+                    document.getElementById('message-box').style.display = 'block';
+                    clearInterval(timer);
+                }
+            } else {
+                card1.classList.remove('flipped');
+                card1.textContent = '';
+                card2.classList.remove('flipped');
+                card2.textContent = '';
+            }
+            flippedCards = [];
+        }
+        
+        function startTimer() {
+            const timerDisplay = document.getElementById('timer');
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft === 0) {
+                    clearInterval(timer);
+                    document.getElementById('win-message').style.display = 'none';
+                    document.getElementById('lose-message').style.display = 'block';
+                    document.getElementById('message-box').style.display = 'block';
+                    document.querySelectorAll('.card').forEach(card => card.removeEventListener('click', flipCard));
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
