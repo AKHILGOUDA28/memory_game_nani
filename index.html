@@ -13,10 +13,10 @@
         }
         .game-container {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr); /* 3 columns for 12 cards */
             gap: 15px;
             width: 80%;
-            max-width: 500px;
+            max-width: 400px;
             margin: auto;
             position: relative;
             padding: 20px;
@@ -139,9 +139,9 @@
         let timer;
         
         const categories = {
-            fruits: ['🍎', '🍌', '🍇', '🍉', '🍓', '🍍', '🥝', '🍒'],
-            animals: ['🐶', '🐱', '🐻', '🐯', '🦁', '🐸', '🐷', '🐭'],
-            cartoons: ['🦸', '🦹', '🤡', '👽', '🧙', '🦄', '👾', '🤖']
+            fruits: ['🍎', '🍌', '🍇', '🍉', '🍓', '🍍'],
+            animals: ['🐶', '🐱', '🐻', '🐯', '🦁', '🐸'],
+            cartoons: ['🦸', '🦹', '🤡', '👽', '🧙', '🦄']
         };
         
         function selectCategory(category) {
@@ -154,7 +154,7 @@
         }
         
         function startGame(selectedTime) {
-            cards = [...categories[selectedCategory], ...categories[selectedCategory]];
+            cards = [...categories[selectedCategory], ...categories[selectedCategory]]; // 6 pairs = 12 cards
             cards = shuffle(cards);
             const gameBoard = document.getElementById('gameBoard');
             gameBoard.innerHTML = '';
